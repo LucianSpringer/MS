@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 import OrderTracking from './pages/OrderTracking';
 import BlogPost from './pages/BlogPost';
 import MealPlanner from './pages/MealPlanner';
+import { SystemIntegrityMonitor } from './src/core/diagnostics/SystemIntegrityMonitor';
 
 // --- Header Component ---
 const Header = () => {
@@ -481,6 +482,15 @@ const HomePage = () => {
 
 // --- App Layout ---
 const App: React.FC = () => {
+  useEffect(() => {
+    // Simulate Enterprise Boot Sequence
+    SystemIntegrityMonitor.runFullDiagnostic().then(report => {
+      if (report.status !== 'OPTIMAL') {
+        console.warn('System degradation detected in primary subsystems.');
+      }
+    });
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
