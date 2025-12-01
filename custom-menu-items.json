@@ -1,0 +1,36 @@
+
+[
+  { "id": "k1", "name": "Nasi Putih Wangi", "category": "Karbo", "price": 5000, "image": "https://images.unsplash.com/photo-1577156942691-18e3c431418e?w=200", "maxQty": 500 },
+  { "id": "k2", "name": "Nasi Kuning Gurih", "category": "Karbo", "price": 7000, "image": "https://images.unsplash.com/photo-1596910547037-846b1980329f?w=200" },
+  { "id": "k3", "name": "Nasi Liwet Teri", "category": "Karbo", "price": 8000, "image": "https://images.unsplash.com/photo-1604503764515-373981882d2c?w=200" },
+  { "id": "k4", "name": "Nasi Merah Organik", "category": "Karbo", "price": 7000, "image": "https://images.unsplash.com/photo-1626804475297-411f8c1b7533?w=200" },
+
+  { "id": "a1", "name": "Ayam Goreng Lengkuas", "category": "Ayam", "price": 12000, "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=200" },
+  { "id": "a2", "name": "Ayam Bakar Madu", "category": "Ayam", "price": 13000, "image": "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=200" },
+  { "id": "a3", "name": "Ayam Rica-Rica", "category": "Ayam", "price": 13000, "image": "https://images.unsplash.com/photo-1602196627061-006f15647a6d?w=200" },
+  { "id": "a4", "name": "Ayam Geprek Sambal Bawang", "category": "Ayam", "price": 12000, "image": "https://images.unsplash.com/photo-1644365313989-183422db7b5f?w=200" },
+
+  { "id": "d1", "name": "Rendang Daging Sapi", "category": "Daging", "price": 18000, "image": "https://images.unsplash.com/photo-1603088549196-b072f9d78414?w=200" },
+  { "id": "d2", "name": "Empal Gepuk", "category": "Daging", "price": 17000, "image": "https://images.unsplash.com/photo-1645696301019-35adcc18fc21?w=200" },
+  { "id": "d3", "name": "Rolade Daging Saus Tiram", "category": "Daging", "price": 15000, "image": "https://images.unsplash.com/photo-1542528180-a1208c5169a5?w=200" },
+
+  { "id": "s1", "name": "Udang Balado Petai", "category": "Seafood", "price": 16000, "image": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200" },
+  { "id": "s2", "name": "Ikan Fillet Asam Manis", "category": "Seafood", "price": 14000, "image": "https://images.unsplash.com/photo-1535922383042-3b2d12e6191b?w=200" },
+
+  { "id": "v1", "name": "Capcay Seafood", "category": "Sayur", "price": 8000, "image": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200" },
+  { "id": "v2", "name": "Tumis Buncis Daging Cincang", "category": "Sayur", "price": 7000, "image": "https://images.unsplash.com/photo-1608688755673-585a9756184a?w=200" },
+  { "id": "v3", "name": "Sayur Asem Jakarta", "category": "Sayur", "price": 6000, "image": "https://images.unsplash.com/photo-1629196896173-82c81729067b?w=200" },
+
+  { "id": "p1", "name": "Perkedel Kentang", "category": "Pendamping", "price": 3000, "image": "https://images.unsplash.com/photo-1602928321679-560bb453f190?w=200", "minQty": 10 },
+  { "id": "p2", "name": "Sambal Goreng Ati Ampela", "category": "Pendamping", "price": 6000, "image": "https://images.unsplash.com/photo-1596707328224-3453715d9a0d?w=200" },
+  { "id": "p3", "name": "Tahu & Tempe Bacem", "category": "Pendamping", "price": 4000, "image": "https://images.unsplash.com/photo-1628155940250-13f6990d0c36?w=200" },
+  { "id": "p4", "name": "Mie Goreng Jawa", "category": "Pendamping", "price": 5000, "image": "https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=200" },
+
+  { "id": "ds1", "name": "Puding Coklat Vla", "category": "Dessert", "price": 5000, "image": "https://images.unsplash.com/photo-1589333830588-4444530d970e?w=200" },
+  { "id": "ds2", "name": "Buah Potong Segar", "category": "Dessert", "price": 5000, "image": "https://images.unsplash.com/photo-1548655848-f674680c2f81?w=200" },
+  { "id": "ds3", "name": "Es Teler", "category": "Dessert", "price": 12000, "image": "https://images.unsplash.com/photo-1599525412497-6a1656f50b98?w=200" },
+
+  { "id": "dr1", "name": "Air Mineral", "category": "Minuman", "price": 1000, "image": "https://images.unsplash.com/photo-1523362628408-3c760ec8537d?w=200" },
+  { "id": "dr2", "name": "Teh Kotak", "category": "Minuman", "price": 4000, "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200" },
+  { "id": "dr3", "name": "Jus Jeruk Segar", "category": "Minuman", "price": 10000, "image": "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=200" }
+]
