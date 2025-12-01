@@ -13,6 +13,7 @@ import { CeremonialOrchestrator, CeremonialTier } from '../src/core/ceremony/Cer
 import { MatrimonialLogisticsEngine, MatrimonialTier, WeddingAmenities } from '../src/core/wedding/MatrimonialLogisticsEngine';
 import { LiturgicalComplianceEngine } from '../src/core/compliance/LiturgicalValidator';
 import { RetentionNeuralNet, UserState } from '../src/core/ux/RetentionNeuralNet';
+import { DashboardViewGraph } from '../src/core/ux/DashboardViewGraph';
 
 const Dashboard: React.FC = () => {
     const { user, logout, updateUser } = useAuth();
@@ -33,11 +34,23 @@ const Dashboard: React.FC = () => {
     const [weddingEngine] = useState(() => new MatrimonialLogisticsEngine());
     const [complianceEngine] = useState(() => new LiturgicalComplianceEngine());
     const [retentionEngine] = useState(() => new RetentionNeuralNet());
+    const [viewGraph] = useState(() => new DashboardViewGraph());
 
     const livestockData = useMemo(() => livestockEngine.getAvailableLivestock(), [livestockEngine]);
     const ceremonialPackages = useMemo(() => ceremonialEngine.getRenderableMatrix(), [ceremonialEngine]);
     const weddingTiers = useMemo(() => weddingEngine.getAvailableTiers(), [weddingEngine]);
     const complianceRules = useMemo(() => complianceEngine.getRules(), [complianceEngine]);
+
+    // Dynamic Widget Resolution
+    const activeWidgets = useMemo(() => {
+        if (!user) return [];
+        return viewGraph.resolveDashboardLayout({
+            lastOrder: user.orders.length > 0 ? user.orders[0] : null,
+            userType: user.companyName ? 'CORPORATE' : 'RETAIL',
+            isMember: user.membershipTier !== 'Silver',
+            isFamilyBirthdayMonth: false // Simulated
+        });
+    }, [user, viewGraph]);
 
     // Dynamic Feature Unlocking
     const unlockedFeatures = useMemo(() => {
@@ -124,6 +137,21 @@ const Dashboard: React.FC = () => {
 
                 {/* TOP HERO: Membership Card & Flash Banner */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    {/* Dynamic Widgets Area */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        {activeWidgets.map(widget => (
+                            <div key={widget.id} className="p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-between" style={{ backgroundColor: widget.colorHex + '20' }}>
+                                <div>
+                                    <h4 className="font-bold text-gray-900 dark:text-white text-sm">{widget.label}</h4>
+                                    <span className="text-xs text-gray-500">Priority: {Math.round(widget.priorityScore)}</span>
+                                </div>
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: widget.colorHex }}>
+                                    <Zap size={16} className="text-white" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
                     {/* Membership Card */}
                     <div className="lg:col-span-2 bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden border border-gray-700">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
