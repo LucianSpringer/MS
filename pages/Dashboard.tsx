@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
     User, Package, MapPin, LogOut, Plus, Trash2, Award, Gift, Filter, Calendar,
-    Crown, RefreshCw, Briefcase, FileText, Upload, Heart, Zap, Lock, ChevronRight, Clock, CheckCircle, HeartHandshake, ScrollText
+    Crown, RefreshCw, Briefcase, Building, FileText, Upload, Heart, Zap, Lock, ChevronRight, Clock, CheckCircle, HeartHandshake, ScrollText
 } from 'lucide-react';
 import Button from '../components/Button';
 import { Address, Order } from '../types';
@@ -13,7 +13,11 @@ import { CeremonialOrchestrator, CeremonialTier } from '../src/core/ceremony/Cer
 import { MatrimonialLogisticsEngine, MatrimonialTier, WeddingAmenities } from '../src/core/wedding/MatrimonialLogisticsEngine';
 import { LiturgicalComplianceEngine } from '../src/core/compliance/LiturgicalValidator';
 import { RetentionNeuralNet, UserState } from '../src/core/ux/RetentionNeuralNet';
-import { DashboardViewGraph } from '../src/core/ux/DashboardViewGraph';
+import { FinancialRoutingMesh, PaymentChannel } from '../src/core/payment/FinancialRoutingMesh';
+import { PredictiveUXGraph, DashboardWidget } from '../src/core/ux/PredictiveUXGraph';
+import { CorporateGovernanceEngine, BudgetLedger } from '../src/core/b2b/CorporateGovernance';
+import ReferralWidget from '../src/components/ReferralWidget';
+import { ReferralGraphNode } from '../src/core/viral/ReferralGraphNode';
 
 const Dashboard: React.FC = () => {
     const { user, logout, updateUser } = useAuth();
@@ -34,7 +38,11 @@ const Dashboard: React.FC = () => {
     const [weddingEngine] = useState(() => new MatrimonialLogisticsEngine());
     const [complianceEngine] = useState(() => new LiturgicalComplianceEngine());
     const [retentionEngine] = useState(() => new RetentionNeuralNet());
-    const [viewGraph] = useState(() => new DashboardViewGraph());
+    const [routingMesh] = useState(() => new FinancialRoutingMesh());
+    const [uxGraph] = useState(() => new PredictiveUXGraph());
+    const [governanceEngine] = useState(() => new CorporateGovernanceEngine());
+    const [referralNode] = useState(() => new ReferralGraphNode());
+    const [dashboardWidgets, setDashboardWidgets] = useState<DashboardWidget[]>([]);
 
     const livestockData = useMemo(() => livestockEngine.getAvailableLivestock(), [livestockEngine]);
     const ceremonialPackages = useMemo(() => ceremonialEngine.getRenderableMatrix(), [ceremonialEngine]);
@@ -42,15 +50,12 @@ const Dashboard: React.FC = () => {
     const complianceRules = useMemo(() => complianceEngine.getRules(), [complianceEngine]);
 
     // Dynamic Widget Resolution
-    const activeWidgets = useMemo(() => {
-        if (!user) return [];
-        return viewGraph.resolveDashboardLayout({
-            lastOrder: user.orders.length > 0 ? user.orders[0] : null,
-            userType: user.companyName ? 'CORPORATE' : 'RETAIL',
-            isMember: user.membershipTier !== 'Silver',
-            isFamilyBirthdayMonth: false // Simulated
-        });
-    }, [user, viewGraph]);
+    useEffect(() => {
+        if (user) {
+            const widgets = uxGraph.generateDashboardMatrix(user);
+            setDashboardWidgets(widgets);
+        }
+    }, [user, uxGraph]);
 
     // Dynamic Feature Unlocking
     const unlockedFeatures = useMemo(() => {
@@ -137,16 +142,28 @@ const Dashboard: React.FC = () => {
 
                 {/* TOP HERO: Membership Card & Flash Banner */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    {/* Dynamic Widgets Area */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        {activeWidgets.map(widget => (
-                            <div key={widget.id} className="p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-between" style={{ backgroundColor: widget.colorHex + '20' }}>
-                                <div>
-                                    <h4 className="font-bold text-gray-900 dark:text-white text-sm">{widget.label}</h4>
-                                    <span className="text-xs text-gray-500">Priority: {Math.round(widget.priorityScore)}</span>
+                    {/* Dynamic Widgets Area (Predictive Grid) */}
+                    <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        {dashboardWidgets.map(widget => (
+                            <div
+                                key={widget.id}
+                                onClick={() => navigate(widget.actionUrl)}
+                                className={`${widget.colorTheme} text-white p-4 rounded-2xl shadow-lg hover:scale-105 transition-transform cursor-pointer relative overflow-hidden`}
+                            >
+                                <div className="absolute top-0 right-0 opacity-10 transform translate-x-2 -translate-y-2">
+                                    {/* Render Icon based on widget.iconType */}
+                                    {widget.iconType === 'CROWN' && <Crown size={48} />}
+                                    {widget.iconType === 'ZAP' && <Zap size={48} />}
+                                    {widget.iconType === 'STAR' && <Award size={48} />}
+                                    {widget.iconType === 'BOX' && <Package size={48} />}
+                                    {widget.iconType === 'MAP' && <MapPin size={48} />}
+                                    {widget.iconType === 'BUILDING' && <Briefcase size={48} />}
+                                    {widget.iconType === 'GIFT' && <Gift size={48} />}
                                 </div>
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: widget.colorHex }}>
-                                    <Zap size={16} className="text-white" />
+
+                                <div className="relative z-10">
+                                    <h4 className="font-bold text-sm md:text-base leading-tight mb-1">{widget.label}</h4>
+                                    <p className="text-xs text-white/80">{widget.subLabel}</p>
                                 </div>
                             </div>
                         ))}
@@ -348,6 +365,90 @@ const Dashboard: React.FC = () => {
                         {/* --- CORPORATE DASHBOARD --- */}
                         {activeTab === 'corporate' && (
                             <div className="space-y-6">
+                                {/* Membership Card */}
+                                <div className="bg-gradient-to-br from-primary to-pink-600 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                                    <div className="relative z-10">
+                                        <div className="flex justify-between items-start mb-8">
+                                            <div>
+                                                <p className="text-white/80 text-sm mb-1">Membership Tier</p>
+                                                <h2 className="text-3xl font-bold flex items-center gap-2">
+                                                    <Crown className="text-yellow-300 fill-yellow-300" /> {user?.membershipTier || 'Gold Member'}
+                                                </h2>
+                                            </div>
+                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                                <Zap className="text-yellow-300" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <div className="flex justify-between text-sm mb-2">
+                                                    <span>Loyalty Points</span>
+                                                    <span className="font-bold">{user?.loyaltyPoints || 0} pts</span>
+                                                </div>
+                                                <div className="w-full bg-black/20 rounded-full h-2">
+                                                    <div className="bg-yellow-400 h-2 rounded-full w-[70%] shadow-[0_0_10px_rgba(250,204,21,0.5)]"></div>
+                                                </div>
+                                                <p className="text-xs text-white/60 mt-2">130 pts to Platinum Tier</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Referral Widget (New) */}
+                                <div className="lg:col-span-1">
+                                    <ReferralWidget
+                                        code={user ? referralNode.generateVanityCode(user.name, 12345) : 'LOADING'}
+                                        friendsCount={3}
+                                        targetCount={10}
+                                        totalCredit={300000}
+                                    />
+                                </div>
+                                {/* Governance & Budget Widget */}
+                                <div className="bg-gradient-to-r from-indigo-900 to-blue-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                                    <div className="relative z-10">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div>
+                                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                                    <Building size={24} className="text-indigo-300" /> Corporate Governance
+                                                </h3>
+                                                <p className="text-indigo-200 text-sm">Budget Control & Approval Workflow</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs text-indigo-300 uppercase tracking-widest">Fiscal Period</p>
+                                                <p className="font-bold text-lg">OCT-2023</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10">
+                                                <p className="text-xs text-indigo-200 mb-1">Total Allocation</p>
+                                                <p className="text-2xl font-bold">Rp 50.000.000</p>
+                                            </div>
+                                            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10">
+                                                <p className="text-xs text-indigo-200 mb-1">Used Amount</p>
+                                                <p className="text-2xl font-bold text-yellow-400">Rp 8.400.000</p>
+                                            </div>
+                                            <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10">
+                                                <p className="text-xs text-indigo-200 mb-1">Remaining</p>
+                                                <p className="text-2xl font-bold text-green-400">Rp 41.600.000</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                                <span>Status: <span className="font-bold">COMPLIANT</span></span>
+                                            </div>
+                                            <button className="bg-white text-indigo-900 px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors">
+                                                View Audit Log
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl flex items-start gap-4">
                                     <div className="bg-blue-100 dark:bg-blue-800 p-3 rounded-xl text-blue-600 dark:text-blue-300">
                                         <Briefcase size={32} />
