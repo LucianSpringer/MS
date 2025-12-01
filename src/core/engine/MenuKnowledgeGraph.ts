@@ -79,6 +79,10 @@ export class MenuKnowledgeGraph {
         return items;
     }
 
+    public getAllItems(): MenuItem[] {
+        return this.getMenuItems();
+    }
+
     private getImageFor(name: string): string {
         // Simple mapping or placeholder
         if (name.includes('Ayam')) return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80";

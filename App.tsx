@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 import OrderTracking from './pages/OrderTracking';
 import BlogPost from './pages/BlogPost';
 import MealPlanner from './pages/MealPlanner';
+import KitchenMonitor from './pages/KitchenMonitor';
 import { SystemIntegrityMonitor } from './src/core/diagnostics/SystemIntegrityMonitor';
 
 // --- Header Component ---
@@ -504,6 +505,7 @@ const App: React.FC = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tracking" element={<OrderTracking />} />
               <Route path="/meal-planner" element={<MealPlanner />} />
+              <Route path="/kitchen-monitor" element={<KitchenMonitor />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
             </Routes>
           </main>

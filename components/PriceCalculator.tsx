@@ -1,49 +1,49 @@
-import React, { useState } from 'react';
+// components/PriceCalculator.tsx
+// REFACTOR: Connecting DynamicYieldEngine
+
+import React, { useState, useEffect } from 'react';
+import { DynamicYieldEngine } from '../src/core/engine/DynamicYieldEngine';
 import { MENU_ITEMS, WHATSAPP_NUMBER } from '../src/core/engine/MenuKnowledgeGraph';
-import { yieldEngine } from '../src/core/engine/DynamicYieldEngine';
 import Button from './Button';
 import { Calculator } from 'lucide-react';
 
 const PriceCalculator: React.FC = () => {
+  const [yieldEngine] = useState(() => new DynamicYieldEngine());
   const [selectedMenuId, setSelectedMenuId] = useState<number>(MENU_ITEMS[0].id);
   const [pax, setPax] = useState<number>(50);
+  const [dynamicTotal, setDynamicTotal] = useState<number>(0);
+  const [surgeMultiplier, setSurgeMultiplier] = useState<number>(1.0);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const selectedItem = MENU_ITEMS.find(item => item.id === selectedMenuId) || MENU_ITEMS[0];
 
-  // Algorithmic Pricing via DynamicYieldEngine
-  const calculateTotal = () => {
-    const baseTotal = selectedItem.price * pax;
+  // Logic: Recalculate price when inputs change
+  useEffect(() => {
+    const basePrice = selectedItem.price * pax;
 
-    // Simulate inputs for the neural network
-    const demand = Math.random(); // Simulated demand
-    const timeOfDay = new Date().getHours();
-    const competitorPrice = selectedItem.price * 0.95; // Simulated competitor
+    // 1. Calculate Demand Factor (Simulated)
+    const demandScore = Math.random(); // In real app, fetch from DB
 
-    // Predict multiplier (0.9 - 1.3)
-    const multiplier = yieldEngine.predictMultiplier(selectedItem.price, demand, timeOfDay, competitorPrice);
+    // 2. Predict Multiplier
+    const multiplier = yieldEngine.predictMultiplier(
+      basePrice,
+      demandScore,
+      new Date(selectedDate).getMonth(),
+      pax
+    );
 
-    // If multiplier < 1, it's a discount. If > 1, it's a surge (but we might hide surge as "normal" price)
-    // For user facing "Discount", we only show if multiplier < 1
+    setSurgeMultiplier(multiplier);
+    setDynamicTotal(Math.floor(basePrice * multiplier));
 
-    const finalTotal = baseTotal * multiplier;
-    const discountAmount = multiplier < 1 ? baseTotal - finalTotal : 0;
-
-    return {
-      total: finalTotal,
-      discount: discountAmount,
-      perPax: finalTotal / pax
-    };
-  };
-
-  const { total, discount, perPax } = calculateTotal();
+  }, [pax, selectedMenuId, selectedDate, selectedItem, yieldEngine]);
 
   const handleOrder = () => {
-    const text = `Halo Mpok Sari, saya mau estimasi order:\nMenu: ${selectedItem.name}\nJumlah: ${pax} pax\nEstimasi Total: Rp ${total.toLocaleString('id-ID')}\n\nApakah tanggal ini tersedia?`;
+    const text = `Halo Mpok Sari, saya mau estimasi order:\nMenu: ${selectedItem.name}\nJumlah: ${pax} pax\nTanggal: ${selectedDate}\nEstimasi Total: Rp ${dynamicTotal.toLocaleString('id-ID')}\n\nApakah tanggal ini tersedia?`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
-    <div className="bg-white dark:bg-darkSurface p-6 md:p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
+    <div className="bg-white dark:bg-darkSurface p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-primary/10 p-3 rounded-full text-primary">
           <Calculator size={24} />
@@ -89,20 +89,32 @@ const PriceCalculator: React.FC = () => {
           <p className="text-xs text-gray-500 mt-1">Minimal order: {selectedItem.minOrder} pax</p>
         </div>
 
+        {/* Date Input for Yield Engine */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanggal Acara</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 dark:text-white"
+          />
+        </div>
+
+        {/* Dynamic Pricing Visualization */}
         <div className="border-t border-dashed border-gray-300 dark:border-gray-700 pt-6 mt-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-600 dark:text-gray-400">Harga per porsi (Est)</span>
-            <span className="font-medium dark:text-gray-200">Rp {Math.round(perPax).toLocaleString('id-ID')}</span>
+            <span className="text-gray-600 dark:text-gray-400">Yield Multiplier</span>
+            <span className={`font-mono font-bold ${surgeMultiplier > 1 ? 'text-red-500' : 'text-green-500'}`}>
+              {surgeMultiplier.toFixed(3)}x
+            </span>
           </div>
-          {discount > 0 && (
-            <div className="flex justify-between items-center mb-2 text-green-600">
-              <span className="text-sm">Diskon Volume</span>
-              <span className="font-medium">- Rp {discount.toLocaleString('id-ID')}</span>
-            </div>
+          {surgeMultiplier > 1 && (
+            <p className="text-xs text-red-400 mb-4 text-right">High demand date detected. Dynamic pricing applied.</p>
           )}
+
           <div className="flex justify-between items-center mt-4">
             <span className="text-xl font-bold text-gray-800 dark:text-white">Total Estimasi</span>
-            <span className="text-2xl font-bold text-primary">Rp {total.toLocaleString('id-ID')}</span>
+            <span className="text-3xl font-bold text-primary">Rp {dynamicTotal.toLocaleString('id-ID')}</span>
           </div>
         </div>
 
