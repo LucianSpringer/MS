@@ -3,18 +3,21 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
     User, Package, MapPin, LogOut, Plus, Trash2, Award, Gift, Filter, Calendar,
-    Crown, RefreshCw, Briefcase, FileText, Upload, Heart, Zap, Lock, ChevronRight, Clock, CheckCircle
+    Crown, RefreshCw, Briefcase, FileText, Upload, Heart, Zap, Lock, ChevronRight, Clock, CheckCircle, HeartHandshake, ScrollText
 } from 'lucide-react';
 import Button from '../components/Button';
 import { Address, Order } from '../types';
 import { WHATSAPP_NUMBER } from '../constants';
 import { LivestockTraceabilityEngine, LivestockData } from '../src/core/ceremony/LivestockTraceabilityEngine';
 import { CeremonialOrchestrator, CeremonialTier } from '../src/core/ceremony/CeremonialPackageEngine';
+import { MatrimonialLogisticsEngine, MatrimonialTier, WeddingAmenities } from '../src/core/wedding/MatrimonialLogisticsEngine';
+import { LiturgicalComplianceEngine } from '../src/core/compliance/LiturgicalValidator';
+import { RetentionNeuralNet, UserState } from '../src/core/ux/RetentionNeuralNet';
 
 const Dashboard: React.FC = () => {
     const { user, logout, updateUser } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'orders' | 'loyalty' | 'corporate' | 'family' | 'saved' | 'addresses' | 'ceremony'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'loyalty' | 'corporate' | 'family' | 'saved' | 'addresses' | 'ceremony' | 'wedding'>('orders');
     const [showAddressForm, setShowAddressForm] = useState(false);
 
     // Filtering State
@@ -27,9 +30,40 @@ const Dashboard: React.FC = () => {
     // Ceremonial Engines
     const [livestockEngine] = useState(() => new LivestockTraceabilityEngine());
     const [ceremonialEngine] = useState(() => new CeremonialOrchestrator());
+    const [weddingEngine] = useState(() => new MatrimonialLogisticsEngine());
+    const [complianceEngine] = useState(() => new LiturgicalComplianceEngine());
+    const [retentionEngine] = useState(() => new RetentionNeuralNet());
 
     const livestockData = useMemo(() => livestockEngine.getAvailableLivestock(), [livestockEngine]);
     const ceremonialPackages = useMemo(() => ceremonialEngine.getRenderableMatrix(), [ceremonialEngine]);
+    const weddingTiers = useMemo(() => weddingEngine.getAvailableTiers(), [weddingEngine]);
+    const complianceRules = useMemo(() => complianceEngine.getRules(), [complianceEngine]);
+
+    // Dynamic Feature Unlocking
+    const unlockedFeatures = useMemo(() => {
+        if (!user) return [];
+        // Map current user to UserState for the engine
+        const userState: UserState = {
+            id: user.id,
+            orderCount: user.orders.length,
+            totalSpend: user.orders.reduce((acc, o) => acc + o.total, 0),
+            lastLogin: Date.now(), // Simulated
+            tier: user.membershipTier as 'SILVER' | 'GOLD' | 'PLATINUM'
+        };
+        return retentionEngine.resolveFeatureAccess(userState);
+    }, [user, retentionEngine]);
+
+    const reorderProbability = useMemo(() => {
+        if (!user) return 0;
+        const userState: UserState = {
+            id: user.id,
+            orderCount: user.orders.length,
+            totalSpend: user.orders.reduce((acc, o) => acc + o.total, 0),
+            lastLogin: Date.now(),
+            tier: user.membershipTier as 'SILVER' | 'GOLD' | 'PLATINUM'
+        };
+        return retentionEngine.predictReorderProbability(userState);
+    }, [user, retentionEngine]);
 
     if (!user) {
         navigate('/auth');
@@ -157,20 +191,21 @@ const Dashboard: React.FC = () => {
                     {/* Sidebar Tabs */}
                     <div className="md:w-64 flex-shrink-0 space-y-2">
                         {[
-                            { id: 'orders', label: 'Riwayat & Langganan', icon: Package },
-                            { id: 'loyalty', label: 'Loyalty Points', icon: Award },
-                            { id: 'corporate', label: 'Corporate Dashboard', icon: Briefcase },
-                            { id: 'family', label: 'Family & Birthday', icon: Heart },
-                            { id: 'saved', label: 'Saved Menus', icon: FileText },
-                            { id: 'ceremony', label: 'Ceremonial Matrix', icon: Crown },
-                            { id: 'addresses', label: 'Alamat Tersimpan', icon: MapPin },
-                        ].map(tab => (
+                            { id: 'orders', label: 'Riwayat & Langganan', icon: Package, requiredFeature: 'DASHBOARD_BASIC' },
+                            { id: 'loyalty', label: 'Loyalty Points', icon: Award, requiredFeature: 'LOYALTY_LEDGER' },
+                            { id: 'corporate', label: 'Corporate Dashboard', icon: Briefcase, requiredFeature: 'CORPORATE_DASHBOARD' },
+                            { id: 'family', label: 'Family & Birthday', icon: Heart, requiredFeature: 'DASHBOARD_BASIC' },
+                            { id: 'saved', label: 'Saved Menus', icon: FileText, requiredFeature: 'SAVED_MENUS' },
+                            { id: 'ceremony', label: 'Ceremonial Matrix', icon: Crown, requiredFeature: 'DASHBOARD_BASIC' },
+                            { id: 'wedding', label: 'Wedding Logistics', icon: HeartHandshake, requiredFeature: 'DASHBOARD_BASIC' },
+                            { id: 'addresses', label: 'Alamat Tersimpan', icon: MapPin, requiredFeature: 'DASHBOARD_BASIC' },
+                        ].filter(tab => unlockedFeatures.includes(tab.requiredFeature)).map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`w-full flex items-center gap-3 px-6 py-4 rounded-xl transition-all font-medium text-sm ${activeTab === tab.id
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                        : 'bg-white dark:bg-darkSurface text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                    : 'bg-white dark:bg-darkSurface text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                                     }`}
                             >
                                 <tab.icon size={18} /> {tab.label}
@@ -410,35 +445,37 @@ const Dashboard: React.FC = () => {
                         )}
 
                         {/* --- EXCLUSIVE MENU (Visible in all tabs or specific tab) --- */}
-                        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                <Lock size={18} className="text-yellow-500" /> Exclusive Member Menu
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-gray-900 text-white p-6 rounded-2xl relative overflow-hidden group cursor-pointer">
-                                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544025162-d76690b67f61?auto=format&fit=crop&w=500&q=80')] bg-cover opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
-                                    <div className="relative z-10">
-                                        <span className="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block">GOLD ONLY</span>
-                                        <h4 className="text-xl font-bold mb-1">Kambing Guling Mini</h4>
-                                        <p className="text-sm text-gray-300 mb-4">Hanya Rp 3.500.000 (Normal 4.5jt)</p>
-                                        <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Saya%20Mau%20Order%20Exclusive%20Kambing%20Guling%20Mini`, '_blank')} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">
-                                            Pesan Sekarang
-                                        </button>
+                        {unlockedFeatures.includes('EXCLUSIVE_MENU_ACCESS') && (
+                            <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                    <Lock size={18} className="text-yellow-500" /> Exclusive Member Menu
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-gray-900 text-white p-6 rounded-2xl relative overflow-hidden group cursor-pointer">
+                                        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544025162-d76690b67f61?auto=format&fit=crop&w=500&q=80')] bg-cover opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+                                        <div className="relative z-10">
+                                            <span className="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block">GOLD ONLY</span>
+                                            <h4 className="text-xl font-bold mb-1">Kambing Guling Mini</h4>
+                                            <p className="text-sm text-gray-300 mb-4">Hanya Rp 3.500.000 (Normal 4.5jt)</p>
+                                            <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Saya%20Mau%20Order%20Exclusive%20Kambing%20Guling%20Mini`, '_blank')} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">
+                                                Pesan Sekarang
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bg-gray-900 text-white p-6 rounded-2xl relative overflow-hidden group cursor-pointer">
-                                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1563379926898-05f4575a45d8?auto=format&fit=crop&w=500&q=80')] bg-cover opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
-                                    <div className="relative z-10">
-                                        <span className="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block">GOLD ONLY</span>
-                                        <h4 className="text-xl font-bold mb-1">Premium Seafood Platter</h4>
-                                        <p className="text-sm text-gray-300 mb-4">Lobster & Kepiting Jumbo (Rp 1.2jt)</p>
-                                        <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Saya%20Mau%20Order%20Exclusive%20Seafood%20Platter`, '_blank')} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">
-                                            Pesan Sekarang
-                                        </button>
+                                    <div className="bg-gray-900 text-white p-6 rounded-2xl relative overflow-hidden group cursor-pointer">
+                                        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1563379926898-05f4575a45d8?auto=format&fit=crop&w=500&q=80')] bg-cover opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+                                        <div className="relative z-10">
+                                            <span className="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block">GOLD ONLY</span>
+                                            <h4 className="text-xl font-bold mb-1">Premium Seafood Platter</h4>
+                                            <p className="text-sm text-gray-300 mb-4">Lobster & Kepiting Jumbo (Rp 1.2jt)</p>
+                                            <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Saya%20Mau%20Order%20Exclusive%20Seafood%20Platter`, '_blank')} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">
+                                                Pesan Sekarang
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* --- CEREMONIAL & LIVESTOCK TRACKING --- */}
                         {activeTab === 'ceremony' && (
@@ -527,6 +564,81 @@ const Dashboard: React.FC = () => {
                                             ))}
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- WEDDING LOGISTICS & COMPLIANCE --- */}
+                        {activeTab === 'wedding' && (
+                            <div className="space-y-8">
+                                {/* Compliance Validator Header */}
+                                <div className="bg-gradient-to-r from-emerald-900 to-emerald-700 text-white p-6 rounded-2xl flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <ScrollText size={24} className="text-emerald-200" /> Liturgical Compliance Engine
+                                        </h3>
+                                        <p className="text-emerald-100 text-sm mt-1">Enterprise-grade validation for Syar'i event protocols.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {complianceRules.map(rule => (
+                                            <div key={rule.ruleId} className="bg-black/20 px-3 py-1 rounded text-xs font-mono border border-white/10" title={rule.description}>
+                                                {rule.severity === 'MANDATORY' ? '🔴' : '🟡'} {rule.ruleId.split('_')[0]}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Matrimonial Tiers */}
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                    {weddingTiers.map(tier => (
+                                        <div key={tier.id} className="bg-white dark:bg-darkSurface border border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:shadow-xl transition-all group">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{tier.venueType.replace('_', ' ')}</span>
+                                                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mt-1">{tier.codeName}</h4>
+                                                </div>
+                                                <div className="text-right">
+                                                    {tier.fixedPriceTotal ? (
+                                                        <p className="text-xl font-bold text-primary">Rp {tier.fixedPriceTotal.toLocaleString('id-ID')}</p>
+                                                    ) : (
+                                                        <p className="text-xl font-bold text-primary">Rp {tier.basePricePerPax.toLocaleString('id-ID')} <span className="text-sm text-gray-500 font-normal">/pax</span></p>
+                                                    )}
+                                                    <p className="text-xs text-gray-400">{tier.minPax} - {tier.maxPax} Pax Capacity</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Bitwise Amenities Visualization */}
+                                            <div className="space-y-3 mb-6">
+                                                <p className="text-xs font-bold text-gray-500 uppercase">Included Amenities (Bitwise Decoded)</p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {(tier.amenityConfig & WeddingAmenities.DECOR_SIMPLE) ? <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><CheckCircle size={14} className="text-green-500" /> Simple Decor</div> : null}
+                                                    {(tier.amenityConfig & WeddingAmenities.DECOR_PREMIUM) ? <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><CheckCircle size={14} className="text-purple-500" /> Premium Decor</div> : null}
+                                                    {(tier.amenityConfig & WeddingAmenities.LIVE_STALL_STD) ? <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><CheckCircle size={14} className="text-orange-500" /> 2 Standard Stalls</div> : null}
+                                                    {(tier.amenityConfig & WeddingAmenities.LIVE_STALL_PREM) ? <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><CheckCircle size={14} className="text-red-500" /> 4 Premium Stalls</div> : null}
+                                                    {(tier.amenityConfig & WeddingAmenities.KAMBING_GULING_UT) ? <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><CheckCircle size={14} className="text-yellow-600" /> Whole Roast Goat</div> : null}
+                                                    {(tier.amenityConfig & WeddingAmenities.WEDDING_CAKE_3T) ? <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><CheckCircle size={14} className="text-pink-500" /> 3-Tier Cake</div> : null}
+                                                    {(tier.amenityConfig & WeddingAmenities.DRONE_DOCS) ? <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><CheckCircle size={14} className="text-blue-500" /> Drone Documentation</div> : null}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl mb-4">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-xs font-bold text-gray-500">Budget Simulation (100 Pax)</span>
+                                                    <span className="text-xs font-mono text-gray-400">LOGISTICS_OVERHEAD: 0%</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-gray-700 dark:text-gray-300">Est. Total</span>
+                                                    <span className="font-bold text-gray-900 dark:text-white">
+                                                        Rp {weddingEngine.simulateBudgetTrajectory(tier.id, 100).estimatedTotal.toLocaleString('id-ID')}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Saya%20tertarik%20Wedding%20Tier%20${tier.codeName}`, '_blank')} className="w-full bg-gray-900 dark:bg-white text-white dark:text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                                                Consult Logistics
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
