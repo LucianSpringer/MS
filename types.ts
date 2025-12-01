@@ -111,9 +111,32 @@ export interface User {
 
   // New Loyalty & Feature Fields
   membershipTier: 'Silver' | 'Gold' | 'Platinum';
-  loyaltyPoints: number; // 1 point per 100k
+  loyaltyPoints: number; // Keep for backward compat, but derived from ledger
+  ledger?: TransactionBlock[]; // The blockchain
   companyName?: string;
   companyLogo?: string;
   familyMembers: FamilyMember[];
   savedMenus: SavedMenu[];
+}
+
+export interface TransactionBlock {
+  hash: string;
+  prevHash: string;
+  timestamp: number;
+  payload: {
+    userId: string;
+    actionType: 'EARN' | 'REDEEM' | 'TIER_UPGRADE';
+    delta: number;
+    metadata: string;
+  };
+  nonce: number;
+}
+
+export interface NutrientNode {
+  id: string;
+  name: string;
+  protein: number;
+  carbs: number;
+  complexityScore: number;
+  edges: string[];
 }

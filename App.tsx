@@ -14,6 +14,7 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import OrderTracking from './pages/OrderTracking';
 import BlogPost from './pages/BlogPost';
+import MealPlanner from './pages/MealPlanner';
 
 // --- Header Component ---
 const Header = () => {
@@ -56,6 +57,7 @@ const Header = () => {
     { name: 'Beranda', href: '/' },
     { name: 'Menu', href: '/#menu' },
     { name: 'Build Menu', href: '/custom-menu' },
+    { name: 'Meal Planner', href: '/meal-planner' },
     { name: 'Lacak Order', href: '/tracking' },
   ];
 
@@ -90,8 +92,8 @@ const Header = () => {
 
   return (
     <header className={`fixed top-0 w-full z-40 transition-all duration-300 ${effectiveScrolled
-        ? 'bg-white/90 dark:bg-black/90 backdrop-blur-md py-3 shadow-md border-b border-gray-200 dark:border-gray-800'
-        : 'bg-transparent py-6'
+      ? 'bg-white/90 dark:bg-black/90 backdrop-blur-md py-3 shadow-md border-b border-gray-200 dark:border-gray-800'
+      : 'bg-transparent py-6'
       }`}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 flex justify-between items-center">
         {/* Logo */}
@@ -491,6 +493,7 @@ const App: React.FC = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tracking" element={<OrderTracking />} />
+              <Route path="/meal-planner" element={<MealPlanner />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
             </Routes>
           </main>
